@@ -1,0 +1,117 @@
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Kalam Middleware</title>
+        <style type="text/css">
+
+           html,body { height: 100%; margin: 0px; padding: 0px;
+                       -moz-user-select: -moz-none;
+                      -khtml-user-select: none;
+                      -webkit-user-select: none;
+                      }
+           ::-webkit-scrollbar {
+                  background-color: #fff;
+                  width: 0em
+          }
+
+          ::-webkit-scrollbar-thumb:window-inactive,
+          ::-webkit-scrollbar-thumb {
+                  background:  black
+          }
+
+         </style>
+         <link href="./public/css/fonts.css" rel="stylesheet">
+        <link rel="stylesheet" href="node_modules/materialize-css/dist/css/materialize.css">
+        <script type="text/javascript" src="node_modules/hammerjs/hammer.min.js"></script>
+        <script type="text/javascript" src="node_modules/materialize-css/dist/js/materialize.js"></script>
+        <script src="./public/js/popover.js"></script>
+        <link href="./public/css/popover.css" rel="stylesheet" />
+        <script type="text/javascript">
+          let $ = require('jquery');
+          var path = require('path');
+          var url = require('url');
+          const spawn = require('child_process').spawn;
+
+          const {remote} = require('electron');
+          let win=remote.getCurrentWindow();
+          $(document).ready(function(){
+            $('#logged').css('display','none');
+            spawn('./Userserver-linux')
+            $('#close').click(function(){
+            win.close();
+          });
+          $('#mini').click(function(){
+          win.minimize();
+          });
+          $('#maxi').click(function(){
+          win.isMaximized()?win.unmaximize():win.maximize();
+          })
+          $('#submit').click(function(){
+          $.post('http://localhost:8000/auth',{username:$('#username').val(),password:$('#password').val()},function(data){
+            if(data.user)
+            {win.hide();
+              $('#logged').css('display',"initial");
+                $('#logging').css('display',"none");
+            }
+          })
+          })
+          $('#ipmanage').keyup(function(event){
+              if(event.keyCode == 13){
+                 $.post('http://localhost:8000/configure',{urlip:event.currentTarget.value},function(){})
+              }
+          });
+          $('#sett').webuiPopover({url:'#settingsform'});
+
+
+          })
+        </script>
+
+      </head>
+      <body style="min-height: 90%;position:fixed">
+        <div class="row" style="height: 100%">
+          <!-- <div class="col s12 grey darken-4" style="padding:0,margin-left:1">
+            <a href="#" style="margin-right:2px"><i class="tiny material-icons red red-text circle" id="close">close</i></a>
+            <a href="#" style="margin-right:2px"><i class="tiny material-icons yellow yellow-text circle" id="mini">close</i></a>
+            <a href="#" style="margin-right:2px"><i class="tiny material-icons green green-text circle" id="maxi">close</i></a>
+          </div> -->
+        <div class="col s12 white" id="logging" style="min-height: 100%">
+          <!-- <div class="col s12"><a><i class="tiny material-icons transparent transparent-text circle">close</i></a></div> -->
+        <div class="col s2"></div>
+        <div class="col s8 center">
+          <div class="col s12 transparent black-text" style="margin-top:20%;margin-bottom:50%">
+            <div class="input-field col s12 ">
+              <input id="username" type="text" class="validate">
+              <label for="username" class="black-text">Username</label>
+            </div>
+            <div class="input-field col s12">
+              <input type="password" id="password" class="validate">
+              <label for="password" class="black-text">Password</label>
+            </div>
+            <a class="waves-effect waves-light btn" id="submit">button</a>
+
+          </div>
+        </div>
+        <div class="col s2">
+          <a class='btn-floating btn-small' id="sett" style=" position: absolute;bottom:2vh;right:2vw"><i class="material-icons">view_module</i></a>
+          <div class="input-field col s16 webui-popover-content" id="settingsform">
+            <input id="ipmanage" type="text" class="validate">
+            <label for="ipmanage" class="black-text">URL</label>
+          </div>
+
+        </div>
+        </div>
+        <div class="col s12" id="logged" style="min-height: 100%,height: 100%">
+          <div class="col s3  grey lighten-3" style="height: 100vh;padding:0">
+        <ul class="white-text center collection">
+          <li><a class="black-text collection-item transparent" href="#!" onclick="win.hide()">Hide</a></li>
+          <li><a class="black-text collection-item transparent" href="#!">Will be filled</a></li>
+        </ul>
+          </div>
+          <div class="col s9 white" style="min-height: 100%">
+
+          </div>
+        </div>
+      </div>
+      </body>
+    </html>

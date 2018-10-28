@@ -1,0 +1,21 @@
+{
+  "name": "Userserver",
+  "version": "1.0.0",
+  "description": "Kalam server",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon --ignore 'public/*.js' app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": "app.js",
+  "pkg": {
+    "scripts": "routes/**/*.js"
+  },
+  "author": "Gautham",
+  "license": "ISC",
+  "dependencies": {
+    "express": "*",
+    "express-fileupload": "*",
+    "http": "*"
+    }
+}

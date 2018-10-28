@@ -1,0 +1,257 @@
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Filesystem</title>
+        <style type="text/css">
+
+           html,body { height: 100%; margin: 0px; padding: 0px;
+                       -moz-user-select: -moz-none;
+                      -khtml-user-select: none;
+                      -webkit-user-select: none;
+                      }
+           ::-webkit-scrollbar {
+                  background-color: #fff;
+                  width: 0em
+          }
+
+          ::-webkit-scrollbar-thumb:window-inactive,
+          ::-webkit-scrollbar-thumb {
+                  background:  black
+          }
+          li.grey:hover{
+            background-color: #fff;
+          }
+         </style>
+         <link href="./public/css/fonts.css" rel="stylesheet">
+        <link rel="stylesheet" href="node_modules/materialize-css/dist/css/materialize.css">
+        <link href="./public/css/photon.min.css" rel="stylesheet">
+        <script type="text/javascript" src="node_modules/hammerjs/hammer.min.js"></script>
+        <script type="text/javascript" src="node_modules/materialize-css/dist/js/materialize.js"></script>
+        <script type="text/javascript">
+          let $ = require('jquery');
+          var path = require('path');
+          var url = require('url')
+          const { spawn,exec} = require('child_process');
+          var fs = require('fs');
+          var mime = require('mime-types');
+          const {remote} = require('electron');
+          let win=remote.getCurrentWindow();
+          var files=[];
+          var directory="/";
+            var state={
+            selection:null,
+            hidden:remote.getGlobal('init').hidden,
+            isdir:false
+          }
+          function openfile(i,j=true) {
+          if(files[i].type!='folder'&&j){
+          exec('cat /usr/share/applications/defaults.list | grep '+files[i].mime,function(error, stdout, stderr){
+          if(!error)
+          {var link = stdout.split('=').splice(1)[0].split('.desktop')[0]+' "http://localhost:8000/?file='+directory+files[i].file+'&type=store"'
+          }
+          else {var link ='x-terminal-emulator --window-with-profile=HoldOpen -H -e "curl http://localhost:8000/?file='+directory+files[i].file+'&type=process"'}
+              var tempexec=exec(link).stdout.on('data', (data) => {
+                 process.stdout.write(data)
+                });})
+          }
+          else if(files[i].type!='folder')
+            {  var link2='xdg-open '+process.env['HOME']+"/"+directory+'/'+files[i].file.replace(/ /g,"\\ ").replace(/\[/g,"\\[").replace(/\]/g,"\\]").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
+                exec(link2,function(error, stdout, stderr){
+                 if(error){
+                   console.log(error);
+                   exec(process.env['HOME']+"/"+directory+'/'+files[i].file.replace(/ /g,"\\ ").replace(/\[/g,"\\[").replace(/\]/g,"\\]").replace(/\(/g,"\\(").replace(/\)/g,"\\)"),function(error, stdout, stderr){
+                     console.log("2nd");
+                     console.log(error);
+                   })
+                 }
+                });
+            }
+            else {
+              if(j){
+                directory+=files[i].file+'/';
+              updatefolderview(directory)}
+              else {
+                directory+='/'+files[i].file;
+                computerfs(directory)
+              }}
+        }
+          function updatefolderview(dir,dirchange=true) {
+            state.isdir=false;
+              $('#filetemplate').empty()
+            $.post('http://localhost:8000/',{path:'filedir',data:dir},function(data){
+              files=data.files;
+              if(data.status=="no user")
+              return 0
+              for (var i = 0; i < files.length; i++) {
+            //    $('#filetemplate').append('<div class="col s1 '+(files[i].type=="folder"?"yellow lighten-1":"red")+'"  style="margin:1%;word-wrap: break-word;">'+(files[i].file.length>10?(files[i].type=='folder'?files[i].file.substr(0,10):(files[i].file.substr(0,7)+files[i].type)):files[i].file.substr(0,10))+'</div>')
+                $('#filetemplate').append('<div class="col" style="height:13vh;width:13vh;margin:1%;word-wrap: break-word;font-size:70%" ondblclick="openfile('+i+')" ><img src="./public/images/icons/'+files[i].type.replace('.',"")+'.png" alt="aletrnate" onerror="this.src=\'./public/images/icons/blank.png\';" style="max-width: 100%;max-heigth:50%" /><strong>'+(files[i].file.length>10?(files[i].type=='folder'?files[i].file.substr(0,10):(files[i].file.substr(0,7)+files[i].type)):files[i].file.substr(0,10))+'</strong></div>')
+
+              }
+              dirtemp=data.directory.replace(" ","").split('/');
+              directory=data.directory;
+              if(dirchange)
+              {$('#tree').empty();
+              dirtemp=directory.split('/')
+              var temp1="";
+              for (var i = 0; i < dirtemp.length; i++) {
+                if(dirtemp[i]!=="")
+                {  temp1+=dirtemp[i]+"/"
+                  $('#tree').append('<button class="btn btn-default" onclick="updatefolderview(\''+temp1+'\',false)" style="font-size:xx-small;">'+dirtemp[i]+'</button>')
+              }
+              }}
+            })
+
+              return 0;
+          }
+          function back(i=true) {
+              var ardir=directory.split("/").filter(entry => entry.trim() != '');
+              ardir.unshift(" ")
+              ardir.pop();
+              directory=ardir.join('/').replace(" ",'');
+
+              (directory==''||directory=='/')?state.isdir?computerfs(""):updatefolderview("/"):state.isdir?computerfs(directory):updatefolderview(directory)
+                  }
+
+          $(document).ready(function(){
+            $('#filecntxt').hide()
+            $(window).click(function(e) {
+              $('#filecntxt').hide()
+            });
+
+           $('#close').click(function(){
+              win.close();
+            });
+            $('#mini').click(function(){
+            win.minimize();
+            });
+            $('#maxi').click(function(){
+            win.isMaximized()?(win.unmaximize()):win.maximize();
+            })
+            win.on('maximize',function(){
+            $('.custom1').hide()
+            })
+            win.on('unmaximize',function(){
+            $('.custom1').show()
+            })
+            require('electron').ipcRenderer.on('ping', (event, message) => {
+            state.hidden=remote.getGlobal('init').hidden;
+            state.isdir?computerfs(directory):updatefolderview(directory)
+            })
+            updatefolderview(directory);
+          })
+          function cntxmnu(e){
+            $("#filecntxt").css("display", "block");
+              $('#filecntxt').offset({ top:e.clientY, left:e.clientX })
+          }
+
+          function computerfs(a,dirchange=true) {
+            state.isdir=true;
+            var file=process.env['HOME']+(a.indexOf("/")==0?a:"/"+a);
+            directory=a;
+            files=[]
+              $('#filetemplate').empty();
+            fs.readdir(file, function(err, items) {
+              if(err)
+              console.log(err);
+              else {
+                items.map(function (files) {
+                  return path.join(file,files);
+              }).forEach(function (file) {
+                  files.push({file:file.split('/').slice(-1).pop(),type:fs.statSync(file).isDirectory()?'folder':path.extname(file),mime:mime.lookup(file.split('/').slice(-1).pop())})
+              });
+              files.sort(function(a, b){
+              return a.file.toLowerCase()-b.file.toLowerCase()})
+
+                for (var i = 0; i < files.length; i++) {
+                  if((files[i].file[0]!="."||state.hidden)&&files[i].type=="folder")
+                    $('#filetemplate').append('<div class="col" ondblclick="openfile('+i+',false)" style="height:13vh;width:13vh;margin:1%;word-wrap: break-word;font-size:70%"><img src="./public/images/icons/'+files[i].type.replace('.',"").toLowerCase()+'.png" alt="aletrnate" onerror="this.onerror=null;this.src=\'./public/images/icons/blank.png\';" style="max-width: 100%;max-heigth:50%" /><strong>'+(files[i].file.length>10?(files[i].type=='folder'?files[i].file.substr(0,10):(files[i].file.substr(0,7)+files[i].type)):files[i].file.substr(0,10))+'</strong></div>')
+                }
+                for (var i = 0; i < files.length; i++) {
+                  if((files[i].file[0]!="."||state.hidden)&&files[i].type!=="folder")
+                    $('#filetemplate').append('<div class="col file" ondblclick="openfile('+i+',false)" style="height:13vh;width:13vh;margin:1%;word-wrap: break-word;font-size:70%"><img src="./public/images/icons/'+files[i].type.replace('.',"").toLowerCase()+'.png" alt="aletrnate" onerror="this.onerror=null;this.src=\'./public/images/icons/blank.png\';" style="max-width: 100%;max-heigth:50%" /><strong>'+(files[i].file.length>10?(files[i].type=='folder'?files[i].file.substr(0,10):(files[i].file.substr(0,7)+files[i].type)):files[i].file.substr(0,10))+'</strong></div>')
+                }
+                if(dirchange)
+                {$('#tree').empty();
+                dirtemp=directory.split('/')
+                var temp1="";
+                for (var i = 0; i < dirtemp.length; i++) {
+                  if(dirtemp[i]!=="")
+                  {  temp1+=dirtemp[i]+"/"
+                    $('#tree').append('<button class="btn btn-default" onclick="computerfs(\''+temp1+'\',false)" style="font-size:xx-small;">'+dirtemp[i]+'</button>')
+                }
+                }}
+                $('.file').contextmenu(cntxmnu)
+            }
+            });
+          }
+        </script>
+
+      </head>
+
+      <body style="min-height: 90%;display: flex; flex-direction: column;">
+        <header class="toolbar toolbar-header grey" style="-webkit-app-region: drag;background-color:#000;float: left; width: 100%;">
+          <div style="position:absolute;left:0;margin:0.2em;z-index:999;-webkit-app-region: no-drag;">
+          <a href="#" style="margin-right:2px"><i class="tiny material-icons red red-text circle custom1" id="close">close</i></a>
+          <a href="#" style="margin-right:2px"><i class="tiny material-icons grey grey-text circle custom1" id="mini">close</i></a>
+          <a href="#" style="margin-right:2px"><i class="tiny material-icons grey grey-text circle custom1" id="maxi">close</i></a>
+          </div>
+      <h3 class="title custom1" style="">
+      hello
+    </h3>
+    <div id="filecntxt" style="position: absolute;z-index:2">
+    <ul class="" >
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+        <li class="grey" onclick="console.log('hello')" style="height:2em;padding:0;min-width:100px">123</li>
+      </ul>
+    </div>
+      <div class="toolbar-actions" style="margin:1.3em 0em 0.5em 0.3em">
+        <div class="btn-group">
+          <button class="btn btn-default" onclick="computerfs('')">
+            <span class="icon icon-home"></span>
+          </button>
+          <button class="btn btn-default" onclick="updatefolderview('/')">
+            <span class="icon icon-cloud"></span>
+          </button>
+          <button class="btn btn-default" onclick="back(state.isdir)">
+            <span class="icon icon-left-dir"></span>
+          </button>
+          <button class="btn btn-default">
+            <span class="icon icon-right-dir"></span>
+          </button>
+        </div>
+        <div class="btn-group" id="tree">
+
+         </div>
+      </div>
+    </header>
+          <div class="window-content" style="height:100%;width: 100%;">
+            <div class="row" style="margin:0">
+              <div class="col grey lighten-4" style="width:14em;height:100%;padding:1em">
+                <div class="col s12 white">
+                  <ul  >
+                    <li><a onclick="updatefolderview('/')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">cloud</i> Kalam</a></li>
+                    <li><a onclick="computerfs('')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">home</i> Home</a></li>
+                    <li><a onclick="computerfs('Documents')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">insert_drive_file</i> Documents</a></li>
+                    <li><a onclick="computerfs('Downloads')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">file_download</i> Downloads</a></li>
+                    <li><a onclick="computerfs('Music')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">music_note</i> Music</a></li>
+                    <li><a onclick="computerfs('Pictures')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">image</i> Pictures</a></li>
+                    <li><a onclick="computerfs('.local/share/Trash')" class="black-text" style="display: inline-flex;vertical-align: middle;margin:5px;cursor:default"><i class="material-icons">delete</i> Trash</a></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="row" id="filetemplate" style="position: absolute;left:14em;right:0em;top:0px;bottom:0px;margin:0;width:auto;overflow-x: hidden; overflow-y: auto;">
+              </div>
+            </div>
+          </div>
+          <footer class="toolbar toolbar-footer">
+            <h1 class="title">&copy; 2017 Kalam Test Build</h1>
+          </footer>
+        </body>
+
+    </html>

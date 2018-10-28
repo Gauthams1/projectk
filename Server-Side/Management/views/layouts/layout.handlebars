@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Kalam</title>
+  <script src="/js/jquery-3.2.1.min.js"></script>
+  <!--Import Google Icon Font-->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!--Import materialize.css-->
+        <link type="text/css" rel="stylesheet" href="/css/materialize.min.css"  media="screen,projection"/>
+
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+  <style>
+  .sidebar{
+border-top: 1px solid black;
+padding:30px;
+background:#343434;
+position: absolute;
+top:9%;
+left: 0;
+bottom: 0;
+height: 100%;
+}
+  </style>
+</head>
+<body class="desp html-mobile-background" >
+  {{#if user}}
+          <div>
+            <nav>
+              <div class="nav-wrapper black">
+                <a href="#" class="brand-logo">Kalam</a>
+                <ul id="nav-mobile" class="right">
+                    <li><a href="/" class="blue-grey-text">Home</a></li>
+                  <li><a href="/users/logout" class="blue-grey-text">logout</a></li>
+                </ul>
+              </div>
+            </nav>
+            <div class="row">
+                <div class="col s2 black white-text" style="height:100vh;position:absolute">
+                  {{#if user.admin}}
+                  <ul class="collection">
+                    <li class="collection-item"><a href="/admin">Admin</a></li>
+                    <li class="collection-item"><a href="/admin/program">Programs</a></li>
+                    <li class="collection-item"><a href="/admin/user">User</a></li>
+                    <li class="collection-item"><a href="/admin/server">Server</a></li>
+                  </ul>
+
+                  {{/if}}
+                </div>
+                <div class="s2 col"></div>
+                <div class="col s10">{{{body}}}</div>
+            </div>
+
+
+
+        </div>
+        {{else}}
+        <div class="container main " >
+                          {{{body}}}
+        </div>
+        {{/if}}
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<script>
+$(document).ready(function(){
+  $( ".tab" ).click(function(e) {
+    console.log($(e.target)[0].attributes[1].value);
+    $('.disp').css("display","none")
+    $("#"+$(e.target)[0].attributes[1].value).css("display", "initial");
+  });
+  $('#b0').click(function(){
+    console.log("logged");
+    $.post('/users/login',{username:$('#Signin #Username')[0].value,password:$('#Signin #password')[0].value},function(data){})
+  })
+  $('#b1').click(function(){
+    console.log("logged up");
+    $.post('/users/register',{username:$('#Signup #Username')[0].value,password:$('#Signup #Password')[0].value,name:$('#Signup #name')[0].value,email:$('#Signup #Email')[0].value,password2:$('#Signup #Password2')[0].value},function(data){})
+  })
+
+})
+
+</script>
+Storage
+<div class="row">
+    <div class="col s12">
+      <div class="col s4"></div>
+      <div class="col s4">
+        <input id="tab-1" type="radio" name="tab"  checked ><label for="tab-1" name="Signin" class="tab">Sign In</label>
+        <input id="tab-2" type="radio" name="tab"   ><label for="tab-2" name="Signup" class="tab">Sign Up</label>
+      </div>
+      <div class="col s4"></div>
+
+  </div>
+  <div class="col s3"></div>
+  <div class="col s6 disp" id="Signin">
+    <div class="row">
+    <form class="col s12">
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="Username" type="text" class="validate">
+          <label for="Username">Username</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="password" type="tel" class="validate">
+          <label for="password">Password</label>
+        </div>
+        <div class="input-field col s12 center-align">
+          <a class="waves-effect waves-light btn" id="b0">button</a>
+        </div>
+      </div>
+    </form>
+  </div>
+  </div>
+  <div class="col s6 disp" id="Signup" style="display:none">
+    <div class="row">
+    <form class="col s12">
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="name" type="text" class="validate">
+          <label for="name">Name</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="Username" type="text" class="validate">
+          <label for="Username">Username</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="Email" type="text" class="validate">
+          <label for="Email">Email</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="Password" type="tel" class="validate">
+          <label for="Password">Password</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="Password2" type="tel" class="validate">
+          <label for="Password2">Conform Password</label>
+        </div>
+        <div class="input-field col s12 center-align">
+          <a class="waves-effect waves-light btn " id="b1">button</a>
+        </div>
+      </div>
+    </form>
+  </div>
+  </div>
+    <div class="col s3"></div>
+</div>
